@@ -5,8 +5,9 @@ import fs from 'node:fs';
 export const DEFAULT_CDP_PORT = parseInt(process.env.LINKEDIN_CDP_PORT || '9222', 10);
 export const DEFAULT_CDP_URL = process.env.LINKEDIN_CDP_URL || `http://127.0.0.1:${DEFAULT_CDP_PORT}`;
 
+const existingProfile = 'C:\\puppeteer-work\\chrome-temp-default';
 export const DEFAULT_USER_DATA_DIR = process.env.LINKEDIN_CHROME_DATA_DIR || 
-  path.join(os.homedir(), '.linkedin-agent-chrome-profile');
+  (fs.existsSync(existingProfile) ? existingProfile : path.join(os.homedir(), '.linkedin-agent-chrome-profile'));
 
 /**
  * Detect the default Chrome executable path based on current operating system.

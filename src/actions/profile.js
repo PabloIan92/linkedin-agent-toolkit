@@ -26,13 +26,29 @@ export async function getProfileSummary(page, profileUrl = null) {
       try { b.click(); } catch {}
     }
 
-    const name = document.querySelector('h1')?.innerText?.trim() || '';
+    let name = document.querySelector('h1')?.innerText?.trim() || '';
+    if (!name && document.title.includes('|')) {
+      name = document.title.split('|')[0].trim();
+    }
     
-    // Headline is typically adjacent to h1 or class text-body-medium
-    const headline = document.querySelector('.text-body-medium')?.innerText?.trim() || '';
+    // Headline
+    let headline = document.querySelector('.text-body-medium')?.innerText?.trim() || '';
+    if (!headline) {
+      const editBtn = document.querySelector('button[aria-label*="Edit profile"], a[aria-label*="Edit profile"], button[aria-label*="Edit intro"]');
+      const introCard = editBtn?.closest('section, div') || document.body;
+      const textLines = (introCard.innerText || '').split('\n').map(l => l.trim()).filter(Boolean);
+      const nameIdx = textLines.findIndex(l => l.toLowerCase() === name.toLowerCase());
+      if (nameIdx >= 0) {
+        let nextIdx = nameIdx + 1;
+        while (textLines[nextIdx] && textLines[nextIdx].toLowerCase().includes('verify')) {
+          nextIdx++;
+        }
+        headline = textLines[nextIdx] || '';
+      }
+    }
     
     // Location
-    const location = document.querySelector('.text-body-small.inline.t-black--light')?.innerText?.trim() || '';
+    let location = document.querySelector('.text-body-small.inline.t-black--light')?.innerText?.trim() || '';
 
     // About section
     let about = '';

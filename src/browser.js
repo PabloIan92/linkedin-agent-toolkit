@@ -11,6 +11,7 @@ export const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 export async function connectBrowser(options = {}) {
   const cdpUrl = options.cdpUrl || DEFAULT_CDP_URL;
 
+  // 1. Try connecting to an already running instance via CDP
   try {
     const browser = await puppeteer.connect({
       browserURL: cdpUrl,
@@ -31,24 +32,63 @@ export async function connectBrowser(options = {}) {
       }
     }
 
+    browser._isDirectLaunch = false;
     return { browser, page };
-  } catch (err) {
+  } catch (cdpErr) {
+    // 2. If auto-launch is allowed (default true), launch Chrome with isolated user profile
+    if (options.autoLaunch !== false) {
+      const chromePath = options.chromePath || getChromeExecutablePath();
+      const userDataDir = options.userDataDir || DEFAULT_USER_DATA_DIR;
+
+      if (chromePath) {
+        try {
+          const browser = await puppeteer.launch({
+            headless: options.headless ?? false,
+            executablePath: chromePath,
+            args: [
+              '--no-sandbox',
+              '--disable-blink-features=AutomationControlled',
+              `--user-data-dir=${userDataDir}`
+            ],
+            defaultViewport: null
+          });
+
+          const pages = await browser.pages();
+          let page = pages.find((p) => (p.url() || '').includes('linkedin.com')) || pages[0];
+          if (!page) page = await browser.newPage();
+
+          browser._isDirectLaunch = true;
+          return { browser, page };
+        } catch (launchErr) {
+          throw new Error(
+            `Failed to connect to CDP (${cdpUrl}) and failed to auto-launch Chrome.\n` +
+            `CDP error: ${cdpErr.message}\n` +
+            `Launch error: ${launchErr.message}`
+          );
+        }
+      }
+    }
+
     throw new Error(
       `Failed to connect to Chrome at ${cdpUrl}.\n` +
       `Ensure Chrome is running with remote debugging enabled.\n` +
       `You can start it with: 'linkedin start-browser' or by launching Chrome with flag: --remote-debugging-port=${DEFAULT_CDP_PORT}\n` +
-      `Details: ${err.message}`
+      `Details: ${cdpErr.message}`
     );
   }
 }
 
 /**
- * Safely disconnects the Puppeteer controller without closing the user's browser.
+ * Safely disconnects or closes the Puppeteer controller.
  */
 export async function disconnectBrowser(browser) {
   if (!browser) return;
   try {
-    await browser.disconnect();
+    if (browser._isDirectLaunch) {
+      await browser.close();
+    } else {
+      await browser.disconnect();
+    }
   } catch {
     // Ignore already disconnected errors
   }
