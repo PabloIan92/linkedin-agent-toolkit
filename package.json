@@ -1,0 +1,37 @@
+{
+  "name": "linkedin-agent-toolkit",
+  "version": "1.0.0",
+  "description": "Zero-credential Model Context Protocol (MCP) server & CLI for AI agents to interact with LinkedIn safely via Chrome DevTools Protocol.",
+  "main": "src/index.js",
+  "type": "module",
+  "bin": {
+    "linkedin-mcp": "./bin/mcp-server.js",
+    "linkedin": "./bin/cli.js"
+  },
+  "scripts": {
+    "start": "node bin/mcp-server.js",
+    "cli": "node bin/cli.js",
+    "start:browser": "node bin/cli.js start-browser",
+    "status": "node bin/cli.js status"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "linkedin",
+    "ai-agent",
+    "claude",
+    "antigravity",
+    "opencode",
+    "puppeteer",
+    "cdp",
+    "automation",
+    "devtools"
+  ],
+  "author": "Pablo Ian Laurino (https://github.com/PabloIan92)",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.6.1",
+    "commander": "^12.1.0",
+    "puppeteer-core": "^23.6.0"
+  }
+}
